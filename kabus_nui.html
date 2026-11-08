@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KABUS NUI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+  }
+
+  body {
+    background: transparent;
+    overflow: hidden;
+    font-family: 'Rajdhani', sans-serif;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* ========== LOADING SCREEN ========== */
+  #loading {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.6s ease;
+  }
+
+  #loading.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .load-name {
+    font-size: 22px;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+
+ .load-status {
+  font-size: 14px;
+  color: #aaa;
+  margin-bottom: 24px;
+}
+
+.load-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.load-main-img {
+  width: 280px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 20px rgba(240,40,60,0.45));
+}
+
+.load-bar-bg {
+  width: 280px;
+  height: 4px;
+  background: #222;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.load-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f0283c, #ff5a6e);
+  width: 0%;
+  transition: width 0.15s ease;
+  border-radius: 2px;
+}
+
+.load-sub {
+  margin-top: 18px;
+  font-size: 13px;
+  color: #666;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+  /* ========== MAIN MENU ========== */
+  #menu {
+    position: fixed;
+    top: 50%;
+    right: 40px;
+    transform: translateY(-50%);
+    width: 340px;
+    background: linear-gradient(160deg, rgba(18,18,24,0.97), rgba(12,12,16,0.98));
+    border: 1px solid rgba(240,40,60,0.25);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(240,40,60,0.08);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 100;
+  }
+
+  #menu.visible {
+    display: flex;
+  }
+
+  .menu-header {
+  padding: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.menu-banner {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  display: block;
+}
+
+.menu-header-bottom {
+  width: 100%;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.menu-logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: #f0283c;
+  letter-spacing: 4px;
+}
+
+.menu-version {
+  font-size: 11px;
+  color: #555;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+  /* Tabs */
+  .tabs {
+  display: flex;
+  padding: 8px 10px 0;
+  gap: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.tab {
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.tab:hover { color: #aaa; background: rgba(255,255,255,0.04); }
+.tab.active {
+  color: #fff;
+  background: rgba(240,40,60,0.18);
+  box-shadow: inset 0 0 0 1px rgba(240,40,60,0.3);
+}
+
+  /* Items list */
+  .items {
+    padding: 10px 12px 14px;
+    max-height: 420px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #f0283c33 transparent;
+  }
+
+  .items::-webkit-scrollbar { width: 4px; }
+  .items::-webkit-scrollbar-thumb { background: #f0283c55; border-radius: 2px; }
+
+  .item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 14px;
+    margin-bottom: 3px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.12s;
+    border: 1px solid transparent;
+  }
+
+  .item:hover { background: rgba(255,255,255,0.03); }
+  .item.selected {
+    background: rgba(240,40,60,0.12);
+    border-color: rgba(240,40,60,0.3);
+  }
+
+  .item-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: #ddd;
+  }
+
+  .item.selected .item-label { color: #fff; }
+
+  .item-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tag-FULL { background: #f0283c33; color: #f0283c; }
+  .tag-SAFE { background: #22c55e33; color: #22c55e; }
+  .tag-LEGIT { background: #3b82f633; color: #3b82f6; }
+  .tag-STRONG { background: #f59e0b33; color: #f59e0b; }
+  .tag-VOICE { background: #a855f733; color: #a855f7; }
+  .tag-NEW { background: #f0283c33; color: #f0283c; }
+  .tag-OLD { background: #6663; color: #999; }
+  .tag-FELOX { background: #ef444433; color: #ef4444; }
+
+  .toggle {
+    width: 36px;
+    height: 20px;
+    background: #333;
+    border-radius: 10px;
+    position: relative;
+    transition: background 0.2s;
+  }
+
+  .toggle.on { background: #f0283c; }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+
+  .toggle.on::after { transform: translateX(16px); }
+
+  .slider-val {
+    font-size: 13px;
+    color: #f0283c;
+    font-family: 'JetBrains Mono', monospace;
+    min-width: 28px;
+    text-align: right;
+  }
+
+  .action-arrow {
+    color: #555;
+    font-size: 14px;
+  }
+
+  .item.selected .action-arrow { color: #f0283c; }
+
+  /* Footer */
+  .menu-footer {
+    padding: 10px 16px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #444;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(18,18,24,0.95);
+    border: 1px solid rgba(240,40,60,0.3);
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 200;
+    pointer-events: none;
+  }
+
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Crosshair */
+#crosshair {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid rgba(240, 40, 60, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(240, 40, 60, 0.6);
+  display: none;
+  z-index: 160;
+  pointer-events: none;
+}
+
+#crosshair::before,
+#crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(240, 40, 60, 0.85);
+}
+
+#crosshair::before {
+  width: 1.5px;
+  height: 14px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#crosshair::after {
+  width: 14px;
+  height: 1.5px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+#crosshair.visible {
+  display: block;
+}
+
+/* Freecam HUD */
+#freecam-hud {
+  position: fixed;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  display: none;
+  z-index: 150;
+  pointer-events: none;
+}
+
+#freecam-hud.visible {
+  display: block;
+}
+
+.fc-prev,
+.fc-next {
+  font-size: 14px;
+  color: #ffffff;
+  opacity: 0.75;
+  margin: 3px 0;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+
+.fc-current {
+  font-size: 22px;
+  font-weight: 700;
+  color: #f0283c;
+  text-shadow: 0 0 18px rgba(240, 40, 60, 0.55);
+  margin: 4px 0;
+}
+
+.fc-hint {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #888;
+  font-family: 'JetBrains Mono', monospace;
+}
+</style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loading">
+  <div class="load-status">Successfully Injected</div>
+
+  <div class="load-logo-wrap">
+    <img class="load-main-img" src="https://i.ibb.co/dJLSqP61/Alevli-Metalik-KBS-Yaz-s.png" alt="KABUS">
+  </div>
+
+  <div class="load-bar-bg">
+    <div class="load-bar-fill" id="loadBar"></div>
+  </div>
+  <div class="load-sub" id="loadSub">Loading...</div>
+</div>
+
+<!-- Main Menu -->
+<div id="menu">
+  <div class="menu-header">
+  <img class="menu-banner" src="https://i.ibb.co/DStC5vd/Kabus-Karanl-k-K-z-l-Ta.png" alt="KABUS">
+  <div class="menu-header-bottom">
+    <div class="menu-logo">KABUS</div>
+    <div class="menu-version">v8.1 NUI</div>
+  </div>
+</div>
+  <div class="tabs" id="tabs"></div>
+  <div class="items" id="items"></div>
+  <div class="menu-footer">
+    <span>↑↓ Navigate</span>
+    <span>←→ Tab / Slider</span>
+    <span>ENTER Select</span>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Crosshair -->
+<div id="crosshair"></div>
+
+<!-- Freecam HUD -->
+<div id="freecam-hud">
+  <div class="fc-prev" id="fcPrev"></div>
+  <div class="fc-current" id="fcCurrent"></div>
+  <div class="fc-next" id="fcNext"></div>
+  <div class="fc-hint">[Wheel] cycle · [LMB] use · [INS] exit</div>
+</div>
+
+<script>
+  const tabsEl = document.getElementById('tabs');
+  const itemsEl = document.getElementById('items');
+  const menuEl = document.getElementById('menu');
+  const loadingEl = document.getElementById('loading');
+  const toastEl = document.getElementById('toast');
+  const freecamEl = document.getElementById('freecam-hud');
+
+  let currentTabs = [];
+  let currentItems = [];
+  let currentPage = 0;
+  let selectedIndex = 0;
+
+  function renderTabs() {
+  tabsEl.innerHTML = '';
+  // نعرض 5 تبويبات كحد أقصى حول الصفحة الحالية
+  const maxVisible = 5;
+  let start = Math.max(0, currentPage - Math.floor(maxVisible / 2));
+  if (start + maxVisible > currentTabs.length) {
+    start = Math.max(0, currentTabs.length - maxVisible);
+  }
+
+  for (let i = start; i < start + maxVisible && i < currentTabs.length; i++) {
+    const el = document.createElement('button');
+    el.className = 'tab' + (i === currentPage ? ' active' : '');
+    el.textContent = currentTabs[i];
+    tabsEl.appendChild(el);
+  }
+}
+
+  function renderItems() {
+    itemsEl.innerHTML = '';
+    currentItems.forEach((item, i) => {
+      const el = document.createElement('div');
+      el.className = 'item' + (i === selectedIndex ? ' selected' : '');
+
+      let right = '';
+      if (item.type === 'toggle') {
+        right = `<div class="toggle ${item.value ? 'on' : ''}"></div>`;
+      } else if (item.type === 'slider') {
+        right = `<span class="slider-val">${item.value}</span>`;
+      } else {
+        right = `<span class="action-arrow">›</span>`;
+      }
+
+      let tag = '';
+      if (item.tag) {
+        tag = `<span class="tag tag-${item.tag}">${item.tag}</span>`;
+      }
+
+      el.innerHTML = `
+        <span class="item-label">${item.label}</span>
+        <div class="item-right">${tag}${right}</div>
+      `;
+      itemsEl.appendChild(el);
+    });
+
+    // Auto scroll to selected
+    const selected = itemsEl.children[selectedIndex];
+    if (selected) selected.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(() => toastEl.classList.remove('show'), 2200);
+  }
+
+  // Listen for messages from Lua
+  window.addEventListener('message', (e) => {
+    const data = e.data;
+    if (!data || !data.action) return;
+
+    switch (data.action) {
+      case 'loading':
+        document.getElementById('loadBar').style.width = (data.progress * 100) + '%';
+        if (data.playerName) document.getElementById('loadName').textContent = data.playerName;
+        if (data.subText) document.getElementById('loadSub').textContent = data.subText;
+        if (data.done) {
+          setTimeout(() => loadingEl.classList.add('hidden'), 400);
+        }
+        break;
+
+      case 'setVisible':
+        if (data.visible) {
+          menuEl.classList.add('visible');
+        } else {
+          menuEl.classList.remove('visible');
+        }
+        break;
+
+      case 'update':
+        if (data.tabs) currentTabs = data.tabs;
+        if (data.items) currentItems = data.items;
+        if (data.page !== undefined) currentPage = data.page;
+        if (data.selected !== undefined) selectedIndex = data.selected;
+        renderTabs();
+        renderItems();
+        break;
+
+      case 'toast':
+        showToast(data.message || '');
+        break;
+
+      case 'freecam':
+  if (data.visible) {
+    freecamEl.classList.add('visible');
+    document.getElementById('crosshair').classList.add('visible');
+    document.getElementById('fcPrev').textContent = data.prev || '';
+    document.getElementById('fcCurrent').textContent = '● ' + (data.current || '');
+    document.getElementById('fcNext').textContent = data.next || '';
+  } else {
+    freecamEl.classList.remove('visible');
+    document.getElementById('crosshair').classList.remove('visible');
+  }
+  break;
+    }
+  });
+
+  // Notify Lua that NUI is ready
+  fetch(`https://${GetParentResourceName ? GetParentResourceName() : 'kabus'}/nuiReady`, {
+    method: 'POST',
+    body: JSON.stringify({})
+  }).catch(() => {});
+</script>
+</body>
+</html>
